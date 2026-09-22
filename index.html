@@ -1,0 +1,85 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f4f4f4"><title>스레드 패션 보드 V3</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif}
+.app{max-width:720px;margin:auto;padding:10px}.title{font-size:22px;font-weight:850;margin:5px 0}.sub{font-size:12px;color:#777;margin-bottom:10px}
+.panel{background:#fff;border-radius:16px;padding:11px;margin-bottom:10px}.row{display:flex;gap:7px;flex-wrap:wrap}
+button,.pickbtn{border:0;border-radius:11px;background:#111;color:#fff;padding:12px 10px;font-weight:750;font-size:14px;text-align:center;cursor:pointer;flex:1}
+.light{background:#e9e9e9;color:#111}.active{box-shadow:inset 0 0 0 3px #111}input[type=file]{display:none}
+.board{width:100%;aspect-ratio:4/5;padding:16px;display:grid;gap:6px;overflow:hidden;background:#f2efe9}
+.c4{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)}.c6{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr)}.c8{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr)}
+.cell{position:relative;overflow:hidden;background:#ddd;touch-action:none}.cell.sel{outline:3px solid #111;outline-offset:-3px}
+.cell img{position:absolute;width:100%;height:100%;object-fit:cover;display:none;pointer-events:none;user-select:none;-webkit-user-drag:none;transform-origin:center center}
+.num{position:absolute;z-index:4;color:#fff;font:bold 38px Georgia,serif;text-shadow:0 1px 5px #0009;pointer-events:none;line-height:1}
+.tl{top:9px;left:9px}.tc{top:9px;left:50%;transform:translateX(-50%)}.tr{top:9px;right:9px}.ml{top:50%;left:9px;transform:translateY(-50%)}.mc{top:50%;left:50%;transform:translate(-50%,-50%)}.mr{top:50%;right:9px;transform:translateY(-50%)}.bl{bottom:9px;left:9px}.bc{bottom:9px;left:50%;transform:translateX(-50%)}.br{bottom:9px;right:9px}
+.status{font-size:12px;font-weight:750;margin:8px 0}.hint{font-size:12px;color:#666;line-height:1.5}
+.edit{display:grid;grid-template-columns:55px 1fr 42px;gap:7px;align-items:center;margin:9px 0;font-size:12px}.edit input{width:100%}
+.setting{display:grid;grid-template-columns:105px 1fr;gap:8px;align-items:center;margin:9px 0;font-size:13px}.setting select,.setting input[type=text]{height:40px;width:100%;border:1px solid #ddd;border-radius:9px;padding:5px;background:#fff}
+.color{display:flex;gap:6px}.color input[type=color]{width:55px;height:40px;border:1px solid #ddd;border-radius:9px}.color input[type=text]{flex:1}
+.thumbstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.thumb{position:relative;aspect-ratio:1;background:#eee;border-radius:8px;overflow:hidden;border:2px solid transparent}.thumb.sel{border-color:#111}.thumb img{width:100%;height:100%;object-fit:cover}.thumb b{position:absolute;left:5px;top:3px;color:white;text-shadow:0 1px 4px #000;font-size:13px}
+.savebox{display:none;margin-top:10px;padding:10px;background:#f5f5f5;border-radius:10px}.savebox img{width:100%;display:block;border-radius:8px}.savebox a{display:block;margin-top:8px;background:#111;color:white;text-decoration:none;text-align:center;padding:12px;border-radius:10px;font-weight:800}
+</style></head><body><div class="app">
+<div class="title">스레드 패션 보드 V3</div><div class="sub">4:5 · 1080 × 1350px · 모바일 터치 편집</div>
+<div class="panel"><div class="row" id="counts"><button class="light" data-n="4">4컷</button><button class="light active" data-n="6">6컷</button><button class="light" data-n="8">8컷</button></div>
+<div style="height:7px"></div><div class="row"><label class="pickbtn">사진 선택<input id="pick" type="file" accept="image/*" multiple></label><button id="save">이미지 만들기/저장</button></div>
+<div id="thumbs" class="thumbstrip"></div></div>
+
+<div class="panel"><div id="board" class="board c6"></div><div id="status" class="status">6장의 사진을 선택해주세요.</div>
+<div class="hint">사진 칸에서 <b>한 손가락으로 이동</b>, <b>두 손가락으로 핀치 확대/축소</b> 가능. 아래 슬라이더도 같이 사용할 수 있어.</div></div>
+
+<div class="panel">
+<div class="edit"><span>확대</span><input id="zoom" type="range" min="1" max="4" step=".01" value="1"><output id="zo">1.00</output></div>
+<div class="edit"><span>좌우</span><input id="xx" type="range" min="-180" max="180" value="0"><output id="xo">0</output></div>
+<div class="edit"><span>상하</span><input id="yy" type="range" min="-220" max="220" value="0"><output id="yo">0</output></div>
+<div class="row"><button id="flipX" class="light">↔ 좌우 반전</button><button id="flipY" class="light">↕ 상하 반전</button><button id="reset" class="light">초기화</button></div>
+<div style="height:7px"></div><div class="row"><button id="prev" class="light">← 순서</button><button id="next" class="light">순서 →</button><button id="toggle" class="light">번호 ON</button></div>
+</div>
+
+<div class="panel"><b>보드 디자인</b>
+<div class="setting"><span>배경색</span><div class="color"><input id="bg" type="color" value="#f2efe9"><input id="hex" type="text" value="#F2EFE9"></div></div>
+<div class="setting"><span>번호 위치</span><select id="pos"><option value="mc">정가운데</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option><option value="ml">왼쪽 가운데</option><option value="mr">오른쪽 가운데</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option><option value="br">오른쪽 아래</option></select></div>
+<div class="setting"><span>번호 크기</span><input id="ns" type="range" min="20" max="70" value="38"></div>
+<div class="setting"><span>바깥 여백</span><input id="pad" type="range" min="0" max="40" value="16"></div>
+<div class="setting"><span>사진 간격</span><input id="gap" type="range" min="0" max="24" value="6"></div>
+<div id="savebox" class="savebox"><b>저장 이미지가 준비됐어.</b><div class="hint">아이폰에서 자동 다운로드가 막히면 아래 완성 이미지를 길게 눌러 ‘사진에 저장’해도 돼.</div><img id="result"><a id="downloadLink" download="threads-board.jpg">JPG 다운로드</a></div>
+</div></div>
+<script>
+const $=x=>document.getElementById(x); let count=6,items=[],sel=0,showNums=true; const board=$('board');
+const toData=f=>new Promise((ok,no)=>{let r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
+const loadImg=s=>new Promise((ok,no)=>{let i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=s});
+function build(){board.innerHTML='';board.className='board c'+count;for(let i=0;i<count;i++){let c=document.createElement('div');c.className='cell';c.dataset.i=i;c.innerHTML=`<img><span class="num ${$('pos').value}">${i+1}</span>`;c.onclick=()=>select(i);attachGestures(c,i);board.appendChild(c)}sel=Math.min(sel,count-1);render();select(sel)}
+function select(i){sel=i;[...board.children].forEach((c,j)=>c.classList.toggle('sel',j===i));[...$('thumbs').children].forEach((c,j)=>c.classList.toggle('sel',j===i));sync()}
+function sync(){let a=items[sel]||{z:1,x:0,y:0};$('zoom').value=a.z;$('xx').value=a.x;$('yy').value=a.y;$('zo').value=(+a.z).toFixed(2);$('xo').value=Math.round(a.x);$('yo').value=Math.round(a.y)}
+function tf(a){return `translate(${a.x}px,${a.y}px) scale(${a.fx*a.z},${a.fy*a.z})`}
+function renderThumbs(){$('thumbs').innerHTML='';items.forEach((a,i)=>{let d=document.createElement('div');d.className='thumb'+(i===sel?' sel':'');d.innerHTML=`<img src="${a.src}"><b>${i+1}</b>`;d.onclick=()=>select(i);$('thumbs').appendChild(d)})}
+function design(){board.style.background=$('bg').value;board.style.padding=$('pad').value+'px';board.style.gap=$('gap').value+'px';document.querySelectorAll('.num').forEach(n=>{n.className='num '+$('pos').value;n.style.fontSize=$('ns').value+'px';n.style.display=showNums?'block':'none'})}
+function render(){[...board.children].forEach((c,i)=>{let im=c.querySelector('img'),a=items[i];if(a){im.src=a.src;im.style.display='block';im.style.transform=tf(a)}else im.style.display='none'});$('status').textContent=items.length?`${items.length}장 불러옴 · ${sel+1}번 편집 중`:`${count}장의 사진을 선택해주세요.`;renderThumbs();design()}
+function attachGestures(cell,i){
+ let start=null,dist0=0,z0=1;
+ cell.addEventListener('touchstart',e=>{if(!items[i])return;select(i);if(e.touches.length===1){start={x:e.touches[0].clientX,y:e.touches[0].clientY,ox:items[i].x,oy:items[i].y}}else if(e.touches.length===2){dist0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);z0=items[i].z}},{passive:false});
+ cell.addEventListener('touchmove',e=>{if(!items[i])return;e.preventDefault();if(e.touches.length===1&&start){items[i].x=start.ox+(e.touches[0].clientX-start.x);items[i].y=start.oy+(e.touches[0].clientY-start.y)}else if(e.touches.length===2){let d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);items[i].z=Math.max(1,Math.min(4,z0*d/dist0))}sync();render()},{passive:false});
+ cell.addEventListener('touchend',()=>{start=null},{passive:true});
+}
+$('counts').onclick=e=>{let b=e.target.closest('[data-n]');if(!b)return;count=+b.dataset.n;items=items.slice(0,count);[...$('counts').children].forEach(x=>x.classList.toggle('active',x===b));build()}
+$('pick').onchange=async e=>{let fs=[...e.target.files].slice(0,count),ss=[];$('status').textContent='사진 불러오는 중…';for(let f of fs)ss.push(await toData(f));items=ss.map(src=>({src,z:1,x:0,y:0,fx:1,fy:1}));sel=0;build();e.target.value=''}
+;[$('zoom'),$('xx'),$('yy')].forEach(el=>el.oninput=()=>{if(!items[sel])return;items[sel].z=+$('zoom').value;items[sel].x=+$('xx').value;items[sel].y=+$('yy').value;sync();render()});
+$('flipX').onclick=()=>{if(!items[sel])return;items[sel].fx*=-1;render()};$('flipY').onclick=()=>{if(!items[sel])return;items[sel].fy*=-1;render()};
+$('reset').onclick=()=>{if(!items[sel])return;Object.assign(items[sel],{z:1,x:0,y:0,fx:1,fy:1});render();sync()}
+$('prev').onclick=()=>{if(sel<1)return;[items[sel-1],items[sel]]=[items[sel],items[sel-1]];sel--;render();select(sel)}
+$('next').onclick=()=>{if(sel>=items.length-1)return;[items[sel+1],items[sel]]=[items[sel],items[sel+1]];sel++;render();select(sel)}
+$('toggle').onclick=()=>{showNums=!showNums;$('toggle').textContent='번호 '+(showNums?'ON':'OFF');design()}
+$('bg').oninput=()=>{$('hex').value=$('bg').value.toUpperCase();design()};$('hex').onchange=()=>{if(/^#[0-9a-f]{6}$/i.test($('hex').value)){$('bg').value=$('hex').value;design()}}
+;[$('pos'),$('ns'),$('pad'),$('gap')].forEach(e=>e.oninput=design);
+$('save').onclick=async()=>{if(!items.length){alert('사진을 먼저 선택해주세요.');return}
+ const W=1080,H=1350,C=document.createElement('canvas'),g=C.getContext('2d');C.width=W;C.height=H;
+ const pad=+$('pad').value/16*26,gp=+$('gap').value/6*8,cols=count===4?2:count===6?3:4,w=(W-2*pad-(cols-1)*gp)/cols,h=(H-2*pad-gp)/2;
+ g.fillStyle=$('bg').value;g.fillRect(0,0,W,H);
+ for(let i=0;i<count;i++){let a=items[i];if(!a)continue;let im=await loadImg(a.src),cx=pad+(i%cols)*(w+gp),cy=pad+Math.floor(i/cols)*(h+gp),base=Math.max(w/im.naturalWidth,h/im.naturalHeight),sc=base*a.z,dw=im.naturalWidth*sc,dh=im.naturalHeight*sc;
+   g.save();g.beginPath();g.rect(cx,cy,w,h);g.clip();g.translate(cx+w/2+a.x*2,cy+h/2+a.y*2);g.scale(a.fx,a.fy);g.drawImage(im,-dw/2,-dh/2,dw,dh);g.restore();
+   if(showNums){let p=$('pos').value,nx=cx+w/2,ny=cy+h/2,al='center',bl='middle',o=18;if(p[1]=='l'){nx=cx+o;al='left'}if(p[1]=='r'){nx=cx+w-o;al='right'}if(p[0]=='t'){ny=cy+o;bl='top'}if(p[0]=='b'){ny=cy+h-o;bl='bottom'}g.font=`bold ${+$('ns').value*1.45}px Georgia`;g.textAlign=al;g.textBaseline=bl;g.fillStyle='#fff';g.shadowColor='#0009';g.shadowBlur=6;g.fillText(i+1,nx,ny);g.shadowBlur=0}
+ }
+ const url=C.toDataURL('image/jpeg',.96);$('result').src=url;$('downloadLink').href=url;$('downloadLink').download=`threads-board-${count}cut-1080x1350.jpg`;$('savebox').style.display='block';$('savebox').scrollIntoView({behavior:'smooth',block:'center'});
+};
+build();
+</script></body></html>
