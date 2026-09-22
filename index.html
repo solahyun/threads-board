@@ -1,0 +1,81 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>스레드 패션 보드</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif}
+.app{max-width:680px;margin:auto;padding:12px}.title{font-size:22px;font-weight:850;margin:4px 0}.sub{font-size:12px;color:#777;margin-bottom:12px}
+.panel{background:#fff;border-radius:16px;padding:12px;margin-bottom:10px}.row{display:flex;gap:7px;flex-wrap:wrap}
+.btn,label.btn{border:0;border-radius:11px;background:#111;color:#fff;padding:12px;font-weight:750;font-size:14px;text-align:center;cursor:pointer;flex:1}
+.light{background:#e9e9e9!important;color:#111!important}.active{box-shadow:inset 0 0 0 3px #111}input[type=file]{display:none}
+.board{width:100%;aspect-ratio:4/5;padding:18px;display:grid;gap:7px;overflow:hidden;background:#f2efe9}
+.board.c4{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)}
+.board.c6{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr)}
+.board.c8{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr)}
+.cell{position:relative;overflow:hidden;background:#ddd}.cell.sel{outline:3px solid #111;outline-offset:-3px}
+.cell img{width:100%;height:100%;object-fit:cover;display:none;pointer-events:none;transform-origin:center}
+.num{position:absolute;z-index:2;color:#fff;font:bold 38px Georgia,serif;text-shadow:0 1px 5px #0009;line-height:1;pointer-events:none}
+.tl{top:10px;left:10px}.tc{top:10px;left:50%;transform:translateX(-50%)}.tr{top:10px;right:10px}
+.ml{top:50%;left:10px;transform:translateY(-50%)}.mc{top:50%;left:50%;transform:translate(-50%,-50%)}.mr{top:50%;right:10px;transform:translateY(-50%)}
+.bl{bottom:10px;left:10px}.bc{bottom:10px;left:50%;transform:translateX(-50%)}.br{bottom:10px;right:10px}
+.status,.hint{font-size:12px;line-height:1.5}.status{font-weight:750;margin:8px 0}.hint{color:#666}
+.edit{display:grid;grid-template-columns:58px 1fr 42px;align-items:center;gap:7px;margin:10px 0;font-size:12px}.edit input{width:100%}
+.setting{display:grid;grid-template-columns:105px 1fr;align-items:center;gap:8px;margin:10px 0;font-size:13px}
+.setting select,.setting input[type=text]{width:100%;height:40px;border:1px solid #ddd;border-radius:9px;padding:5px;background:#fff}
+.color{display:flex;gap:6px}.color input[type=color]{width:55px;height:40px;border:1px solid #ddd;border-radius:9px;padding:3px}.color input[type=text]{flex:1}
+.info{background:#f5f5f5;padding:10px;border-radius:10px;font-size:12px;line-height:1.5}
+</style></head><body><div class="app">
+<div class="title">스레드 패션 보드</div><div class="sub">4:5 · JPG 저장 1080 × 1350 px</div>
+
+<div class="panel"><div class="row" id="counts">
+<button class="btn light" data-n="4">4컷</button><button class="btn light active" data-n="6">6컷</button><button class="btn light" data-n="8">8컷</button>
+</div><div style="height:8px"></div><div class="row">
+<label class="btn">사진 선택<input id="pick" type="file" accept="image/*" multiple></label><button class="btn" id="save">JPG 저장</button>
+</div></div>
+
+<div class="panel"><div id="board" class="board c6"></div></div>
+
+<div class="panel"><div id="status" class="status">6장의 사진을 선택해주세요.</div>
+<div class="hint">사진을 터치 → 확대/좌우/상하로 얼굴이나 쇼핑몰 UI를 프레임 밖으로 잘라낼 수 있어.</div>
+<div class="edit"><span>확대</span><input id="zoom" type="range" min="1" max="3" step=".01" value="1"><output id="zo">1.00</output></div>
+<div class="edit"><span>좌우</span><input id="xx" type="range" min="-120" max="120" value="0"><output id="xo">0</output></div>
+<div class="edit"><span>상하</span><input id="yy" type="range" min="-160" max="160" value="0"><output id="yo">0</output></div>
+<div class="row"><button id="prev" class="btn light">← 순서</button><button id="next" class="btn light">순서 →</button><button id="toggle" class="btn light">번호 ON</button></div>
+</div>
+
+<div class="panel"><b>보드 디자인</b>
+<div class="setting"><span>프레임 배경색</span><div class="color"><input id="bg" type="color" value="#f2efe9"><input id="hex" type="text" value="#F2EFE9"></div></div>
+<div class="setting"><span>번호 위치</span><select id="pos">
+<option value="mc">정가운데</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
+<option value="ml">왼쪽 가운데</option><option value="mr">오른쪽 가운데</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option><option value="br">오른쪽 아래</option>
+</select></div>
+<div class="setting"><span>번호 크기</span><input id="ns" type="range" min="20" max="70" value="38"></div>
+<div class="setting"><span>바깥 여백</span><input id="pad" type="range" min="0" max="40" value="18"></div>
+<div class="setting"><span>사진 간격</span><input id="gap" type="range" min="0" max="24" value="7"></div>
+<div class="info"><b>출력 크기: 1080 × 1350px (4:5)</b><br>4컷·6컷·8컷 모두 같은 전체 캔버스 크기로 저장돼.</div>
+</div></div>
+<script>
+const $=x=>document.getElementById(x);let count=6,items=[],sel=0,show=true;const board=$('board');
+const dataURL=f=>new Promise((ok,no)=>{let r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
+const getImg=s=>new Promise((ok,no)=>{let i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=s});
+function build(){board.innerHTML='';board.className='board c'+count;for(let i=0;i<count;i++){let c=document.createElement('div');c.className='cell';c.innerHTML=`<img><span class="num ${$('pos').value}">${i+1}</span>`;c.onclick=()=>select(i);board.appendChild(c)}sel=Math.min(sel,count-1);render();select(sel)}
+function select(i){sel=i;[...board.children].forEach((c,j)=>c.classList.toggle('sel',i===j));sync()}
+function sync(){let a=items[sel]||{z:1,x:0,y:0};$('zoom').value=a.z;$('xx').value=a.x;$('yy').value=a.y;$('zo').value=(+a.z).toFixed(2);$('xo').value=a.x;$('yo').value=a.y}
+function design(){board.style.background=$('bg').value;board.style.padding=$('pad').value+'px';board.style.gap=$('gap').value+'px';document.querySelectorAll('.num').forEach(n=>{n.className='num '+$('pos').value;n.style.fontSize=$('ns').value+'px';n.style.display=show?'block':'none'})}
+function render(){[...board.children].forEach((c,i)=>{let im=c.querySelector('img'),a=items[i];if(a){im.src=a.src;im.style.display='block';im.style.transform=`translate(${a.x}px,${a.y}px) scale(${a.z})`}else im.style.display='none'});$('status').textContent=items.length?`${items.length}장 불러옴 · ${sel+1}번 편집 중`:`${count}장의 사진을 선택해주세요.`;design()}
+$('counts').onclick=e=>{let b=e.target.closest('[data-n]');if(!b)return;count=+b.dataset.n;items=items.slice(0,count);[...$('counts').children].forEach(x=>x.classList.toggle('active',x===b));build()}
+$('pick').onchange=async e=>{let fs=[...e.target.files].slice(0,count),ss=[];$('status').textContent='사진 불러오는 중…';for(let f of fs)ss.push(await dataURL(f));items=ss.map(src=>({src,z:1,x:0,y:0}));sel=0;render();select(0);e.target.value=''}
+;[$('zoom'),$('xx'),$('yy')].forEach(el=>el.oninput=()=>{if(!items[sel])return;items[sel].z=+$('zoom').value;items[sel].x=+$('xx').value;items[sel].y=+$('yy').value;sync();render()});
+$('prev').onclick=()=>{if(sel<1)return;[items[sel-1],items[sel]]=[items[sel],items[sel-1]];sel--;render();select(sel)}
+$('next').onclick=()=>{if(sel>=items.length-1)return;[items[sel+1],items[sel]]=[items[sel],items[sel+1]];sel++;render();select(sel)}
+$('toggle').onclick=()=>{show=!show;$('toggle').textContent='번호 '+(show?'ON':'OFF');design()}
+$('bg').oninput=()=>{$('hex').value=$('bg').value.toUpperCase();design()}
+$('hex').onchange=()=>{if(/^#[0-9a-f]{6}$/i.test($('hex').value)){$('bg').value=$('hex').value;design()}}
+;[$('pos'),$('ns'),$('pad'),$('gap')].forEach(e=>e.oninput=design);
+$('save').onclick=async()=>{if(!items.length){alert('사진을 먼저 선택해주세요.');return}const W=1080,H=1350,C=document.createElement('canvas'),g=C.getContext('2d');C.width=W;C.height=H;
+let pad=+$('pad').value/18*28,gp=+$('gap').value/7*8,cols=count==4?2:count==6?3:4,w=(W-2*pad-(cols-1)*gp)/cols,h=(H-2*pad-gp)/2;g.fillStyle=$('bg').value;g.fillRect(0,0,W,H);
+for(let i=0;i<count;i++){let a=items[i];if(!a)continue;let im=await getImg(a.src),cx=pad+(i%cols)*(w+gp),cy=pad+Math.floor(i/cols)*(h+gp),base=Math.max(w/im.naturalWidth,h/im.naturalHeight),sc=base*a.z,dw=im.naturalWidth*sc,dh=im.naturalHeight*sc;
+g.save();g.beginPath();g.rect(cx,cy,w,h);g.clip();g.drawImage(im,cx+(w-dw)/2+a.x*2,cy+(h-dh)/2+a.y*2,dw,dh);g.restore();
+if(show){let p=$('pos').value,nx=cx+w/2,ny=cy+h/2,al='center',bl='middle',o=18;if(p[1]=='l'){nx=cx+o;al='left'}if(p[1]=='r'){nx=cx+w-o;al='right'}if(p[0]=='t'){ny=cy+o;bl='top'}if(p[0]=='b'){ny=cy+h-o;bl='bottom'}g.font=`bold ${+$('ns').value*1.45}px Georgia`;g.textAlign=al;g.textBaseline=bl;g.fillStyle='#fff';g.shadowColor='#0009';g.shadowBlur=6;g.fillText(i+1,nx,ny);g.shadowBlur=0}}
+let a=document.createElement('a');a.download=`threads-board-${count}cut.jpg`;a.href=C.toDataURL('image/jpeg',.96);a.click()}
+build();
+</script></body></html>
